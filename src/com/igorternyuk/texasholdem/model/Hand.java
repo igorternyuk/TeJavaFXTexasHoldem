@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 import static com.igorternyuk.texasholdem.model.Card.LOW_ACE_VALUE;
@@ -66,6 +67,7 @@ public class Hand implements Comparable<Hand> {
     private static final int MIN_NUMBER_OF_CARDS = 5;
     private List<Card> cards = new ArrayList<>();
     private Value value;
+    final List<Card> finalFiveCardCombination = new ArrayList<>(MIN_NUMBER_OF_CARDS);
     private boolean isValueChanged = true;
 
     public Hand(){
@@ -80,6 +82,12 @@ public class Hand implements Comparable<Hand> {
         return this.value;
     }
 
+    public List<Card> getFinalFiveCardCombination(){
+        if(this.isValueChanged){
+            evaluate();
+        }
+        return Collections.unmodifiableList(this.finalFiveCardCombination);
+    }
 
     public void addCard(final Card card){
         if(this.cards.size() < MAX_NUMBER_OF_CARDS) {
@@ -115,87 +123,142 @@ public class Hand implements Comparable<Hand> {
     }
 
     private void evaluate() {
-        final Value value = new Value(Combination.NO_HAND, new ArrayList<>());
-        if(this.cards.size() >= MIN_NUMBER_OF_CARDS && this.cards.size() < MAX_NUMBER_OF_CARDS){
+        if (this.isValueChanged) {
+            this.finalFiveCardCombination.clear();
+            final Value value = new Value(Combination.NO_HAND, new ArrayList<>());
+            if (this.cards.size() >= MIN_NUMBER_OF_CARDS && this.cards.size() < MAX_NUMBER_OF_CARDS) {
 
-            final Map<Integer, Integer> rankOccurences = new HashMap<>();
-            for(int val = LOW_ACE_VALUE; val <= Rank.ACE.getValue(); ++val){
-                rankOccurences.put(val, 0);
-            }
-
-            final Map<Suit, Integer> suitOccurences = new HashMap<>();
-            for (Suit suit: Suit.values()){
-                suitOccurences.put(suit, 0);
-            }
-
-            this.cards.forEach(card -> {
-                rankOccurences.put(card.getValue(), rankOccurences.get(card.getValue()) + 1);
-                if(card.isRank(Rank.ACE)){
-                    rankOccurences.put(LOW_ACE_VALUE, rankOccurences.get(LOW_ACE_VALUE));
+                final Map<Integer, List<Card>> rankOccurences = new HashMap<>();
+                for (int val = LOW_ACE_VALUE; val <= Rank.ACE.getValue(); ++val) {
+                    rankOccurences.put(val, new ArrayList<>(4));
                 }
-                suitOccurences.put(card.getSuit(), suitOccurences.get(card.getSuit()) + 1);
-            });
 
-            boolean isFlush = false;
-            List<Card> cardsOfTheSameFlush= null;
-            int highestFlushValue = 0;
-            for(Map.Entry<Suit, Integer> entry: suitOccurences.entrySet()){
-                if(entry.getValue() >= MIN_NUMBER_OF_CARDS){
-                    isFlush = true;
-                    cardsOfTheSameFlush = this.cards.stream().filter(card -> card.isSuit(entry.getKey()))
-                            .collect(Collectors.toList());
-                    for (final Card card : cardsOfTheSameFlush) {
-                        if(card.getValue() > highestFlushValue){
-                            highestFlushValue = card.getValue();
-                        }
+                final Map<Suit, List<Card>> suitOccurences = new HashMap<>();
+                for (Suit suit : Suit.values()) {
+                    suitOccurences.put(suit, new ArrayList<>(7));
+                }
+
+                this.cards.forEach(card -> {
+                    rankOccurences.get(card.getValue()).add(card);
+                    if (card.isRank(Rank.ACE)) {
+                        rankOccurences.get(LOW_ACE_VALUE).add(card);
                     }
-                    break;
-                }
-            }
+                    suitOccurences.get(card.getSuit()).add(card);
+                });
 
-            int numberOfPairs = 0, numberOfTriples = 0, numberOfFours = 0, numberInARow = 0,
-                maxNumberInARow = 0, maxValueInARow = 0;
-            for(Map.Entry<Integer, Integer> entry: rankOccurences.entrySet()){
-                switch (entry.getValue()){
-                    case 0:
-                        numberInARow = 0;
+                boolean isFlush = false;
+                List<Card> cardsOfTheSameFlush = null;
+                int highestFlushValue = 0;
+                for (Map.Entry<Suit, List<Card>> entry : suitOccurences.entrySet()) {
+                    if (entry.getValue().size() >= MIN_NUMBER_OF_CARDS) {
+                        isFlush = true;
+                        cardsOfTheSameFlush = entry.getValue();
+                        cardsOfTheSameFlush.sort(Comparator.comparing(Card::getValue));
+                        highestFlushValue = cardsOfTheSameFlush.get(cardsOfTheSameFlush.size() - 1).getValue();
                         break;
-                    case 1:
-                        ++numberInARow;
-                        if(entry.getKey() > maxNumberInARow){
-                            maxNumberInARow = entry.getKey();
-                        }
-                        if(entry.getKey() > maxValueInARow){
-                            maxValueInARow = entry.getValue();
-                        }
-                        value.pattern.add(new CardOccurence(entry.getKey(), entry.getValue()));
-                    case 2:
-                        ++numberOfPairs;
-                        value.pattern.add(new CardOccurence(entry.getKey(), entry.getValue()));
-                        break;
-                    case 3:
-                        ++numberOfTriples;
-                        value.pattern.add(new CardOccurence(entry.getKey(), entry.getValue()));
-                        break;
-                    case 4:
-                        ++numberOfFours;
-                        value.pattern.add(new CardOccurence(entry.getKey(), entry.getValue()));
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            if(isFlush){
-                if(numberInARow >= MIN_NUMBER_OF_CARDS){
-                    if(maxValueInARow == Rank.ACE.getValue()){
-                        value.combination = Combination.ROYAL_FLESH;
                     }
                 }
+
+                int numberOfPairs = 0, numberOfTriples = 0, numberOfQuads = 0, numberInARow = 0,
+                        maxNumberInARow = 0, maxValueInARow = 0;
+                final List<Card> cardsInARowOld = new ArrayList<>(MAX_NUMBER_OF_CARDS);
+                final List<Card> cardsInARowNew = new ArrayList<>(MAX_NUMBER_OF_CARDS);
+                final Map<Integer, List<Card>> pairs = new HashMap<>();
+                final Map<Integer, List<Card>> triples = new HashMap<>();
+                final Map<Integer, List<Card>> quads = new HashMap<>();
+                for (Map.Entry<Integer, List<Card>> entry : rankOccurences.entrySet()) {
+                    final List<Card> currCardList = entry.getValue();
+                    switch (currCardList.size()) {
+                        case 0:
+                            if (numberInARow > cardsInARowOld.size()) {
+                                maxValueInARow = cardsInARowNew.get(cardsInARowNew.size() - 1).getValue();
+                                cardsInARowOld.clear();
+                                cardsInARowOld.addAll(cardsInARowNew);
+                                cardsInARowNew.clear();
+                            }
+                            numberInARow = 0;
+                            break;
+                        case 1:
+                            ++numberInARow;
+                            cardsInARowNew.add(currCardList.get(0));
+                        case 2:
+                            pairs.put(++numberOfPairs, currCardList);
+                            break;
+                        case 3:
+                            triples.put(++numberOfTriples, currCardList);
+                            break;
+                        default:
+                            quads.put(++numberOfQuads, currCardList);
+                            break;
+                    }
+                }
+
+                //cardsInARowOld.sort(Comparator.comparing(Card::getValue));
+
+                if (numberInARow >= MIN_NUMBER_OF_CARDS) {
+                    boolean isStraight = false;
+                    if (isFlush) {
+                        if (maxValueInARow == Rank.ACE.getValue()) {
+                            value.combination = Combination.ROYAL_FLESH;
+                            isStraight = true;
+                        } else if (maxValueInARow == Rank.FIVE.getValue()) {
+                            value.combination = Combination.STRAIGHT_FLUSH_WITH_LOW_ACE;
+                            isStraight = true;
+                        } else if (maxValueInARow == highestFlushValue) {
+                            value.combination = Combination.STRAIGHT_FLUSH;
+                            isStraight = true;
+                        }
+                    } else {
+                        if (maxValueInARow == Rank.FIVE.getValue()) {
+                            value.combination = Combination.STRAIGHT_WITH_LOW_ACE;
+                            isStraight = true;
+                        } else {
+                            value.combination = Combination.STRAIGHT;
+                            isStraight = true;
+                        }
+                    }
+                    if (isStraight) {
+                        for (int i = numberInARow - MIN_NUMBER_OF_CARDS; i < MIN_NUMBER_OF_CARDS; ++i) {
+                            this.finalFiveCardCombination.add(cardsInARowOld.get(i));
+                            value.pattern.add(new CardOccurence(1, cardsInARowOld.get(i).getValue()));
+                        }
+                    }
+                } else if (numberOfQuads > 0) {
+                    value.combination = Combination.FOUR_OF_A_KIND;
+                    final int val = quads.get(numberOfQuads).get(0).getValue();
+                    value.pattern.add(new CardOccurence(4, val));
+
+                } else if (numberOfTriples == 2) {
+                    //Choose the best full house
+                } else if (numberOfTriples == 1) {
+                    if (numberOfPairs == 2) {
+                        //Full house
+                    } else if (numberOfPairs == 1) {
+                        //Full house
+                    }
+                    //Triple
+                } else if(numberOfPairs == 2){
+                    //Two pairs
+                } else if(numberOfPairs == 1){
+                    //Pair
+                } else if (isFlush) {
+                    this.finalFiveCardCombination.addAll(cardsOfTheSameFlush);
+                    for(final Card card: this.finalFiveCardCombination){
+                        value.pattern.add(new CardOccurence(1, card.getValue()));
+                    }
+                    value.combination = Combination.FLUSH;
+                } else {
+                    value.combination = Combination.HIGH_CARD;
+                    this.cards.sort(Comparator.comparing(Card::getValue));
+                    final int numberOfCards = this.cards.size();
+                    for(int i = MAX_NUMBER_OF_CARDS - numberOfCards; i < numberOfCards; ++i){
+                        this.finalFiveCardCombination.add(this.cards.get(i));
+                        value.pattern.add(new CardOccurence(1, this.cards.get(i).getValue()));
+                    }
+                }
             }
-            if(maxNumberInARow == 4 && maxValueInARow == Rank.FIVE.getValue()){
-                value.combination = Combination.STRAIGHT_WITH_LOW_ACE;
-            }
+            this.value = value;
+            this.isValueChanged = false;
         }
     }
 }
