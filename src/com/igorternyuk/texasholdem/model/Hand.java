@@ -66,8 +66,8 @@ public class Hand implements Comparable<Hand> {
     private static final int MAX_NUMBER_OF_CARDS = 7;
     private static final int MIN_NUMBER_OF_CARDS = 5;
     private List<Card> cards = new ArrayList<>();
+    private final List<Card> finalFiveCardCombination = new ArrayList<>(MIN_NUMBER_OF_CARDS);
     private Value value;
-    final List<Card> finalFiveCardCombination = new ArrayList<>(MIN_NUMBER_OF_CARDS);
     private boolean isValueChanged = true;
 
     public Hand(){
@@ -107,10 +107,6 @@ public class Hand implements Comparable<Hand> {
 
     }
 
-    @Override
-    public int compareTo(Hand o) {
-        return 0;
-    }
 
     @Override
     public String toString(){
@@ -159,8 +155,7 @@ public class Hand implements Comparable<Hand> {
                     }
                 }
 
-                int numberOfPairs = 0, numberOfTriples = 0, numberOfQuads = 0, numberInARow = 0,
-                        maxNumberInARow = 0, maxValueInARow = 0;
+                int numberOfPairs = 0, numberOfTriples = 0, numberOfQuads = 0, numberInARow = 0, maxValueInARow = 0;
                 final List<Card> cardsInARowOld = new ArrayList<>(MAX_NUMBER_OF_CARDS);
                 final List<Card> cardsInARowNew = new ArrayList<>(MAX_NUMBER_OF_CARDS);
                 final Map<Integer, List<Card>> pairs = new HashMap<>();
@@ -192,9 +187,6 @@ public class Hand implements Comparable<Hand> {
                             break;
                     }
                 }
-
-                //cardsInARowOld.sort(Comparator.comparing(Card::getValue));
-
                 if (numberInARow >= MIN_NUMBER_OF_CARDS) {
                     boolean isStraight = false;
                     if (isFlush) {
@@ -229,31 +221,98 @@ public class Hand implements Comparable<Hand> {
                     value.pattern.add(new CardOccurence(4, val));
 
                 } else if (numberOfTriples == 2) {
-                    //Choose the best full house
+                    value.combination = Combination.FULL_HOUSE;
+                    final List<Card> firstTriple = triples.get(1);
+                    final List<Card> secondTriple = triples.get(2);
+                    final int firstTripleValue = firstTriple.get(0).getValue();
+                    final int secondTripleValue = secondTriple.get(0).getValue();
+                    final List<Card> highRankedTriple = firstTripleValue > secondTripleValue ? firstTriple : secondTriple;
+                    final List<Card> lowRankedTriple = firstTripleValue > secondTripleValue ? secondTriple : firstTriple;
+                    this.finalFiveCardCombination.addAll(highRankedTriple);
+                    this.finalFiveCardCombination.add(lowRankedTriple.get(0));
+                    this.finalFiveCardCombination.add(lowRankedTriple.get(1));
+                    value.pattern.add(new CardOccurence(3, highRankedTriple.get(0).getValue()));
+                    value.pattern.add(new CardOccurence(2, lowRankedTriple.get(0).getValue()));
                 } else if (numberOfTriples == 1) {
+                    List<Card> triple = triples.get(1);
                     if (numberOfPairs == 2) {
-                        //Full house
+                        value.combination = Combination.FULL_HOUSE;
+                        value.pattern.add(new CardOccurence(3, triple.get(0).getValue()));
+                        this.finalFiveCardCombination.addAll(triples.get(1));
+                        final List<Card> firstPair = pairs.get(1);
+                        final List<Card> secondPair = pairs.get(2);
+                        if(firstPair.get(0).getValue() > secondPair.get(0).getValue()){
+                            this.finalFiveCardCombination.addAll(firstPair);
+                            value.pattern.add(new CardOccurence(2, firstPair.get(0).getValue()));
+                        } else {
+                            this.finalFiveCardCombination.addAll(secondPair);
+                            value.pattern.add(new CardOccurence(3, secondPair.get(0).getValue()));
+                        }
                     } else if (numberOfPairs == 1) {
-                        //Full house
+                        value.combination = Combination.FULL_HOUSE;
+                        final List<Card> pair = pairs.get(1);
+                        value.pattern.add(new CardOccurence(3, triple.get(0).getValue()));
+                        value.pattern.add(new CardOccurence(2, pair.get(0).getValue()));
+                        this.finalFiveCardCombination.addAll(triple);
+                        this.finalFiveCardCombination.addAll(pair);
                     }
-                    //Triple
+                    value.combination = Combination.THREE_OF_A_KIND;
+                    value.pattern.add(new CardOccurence(3, triple.get(0).getValue()));
+                    this.finalFiveCardCombination.addAll(triple);
+                    this.cards.sort(Comparator.comparing(Card::getValue));
+                    for(int i = this.cards.size() - 1; i >= 0; --i){
+                        if(this.cards.get(i).getValue() == triple.get(0).getValue())
+                            continue;
+                        this.finalFiveCardCombination.add(cards.get(i));
+                        if(this.finalFiveCardCombination.size() == MIN_NUMBER_OF_CARDS)
+                            break;
+                    }
                 } else if(numberOfPairs == 2){
-                    //Two pairs
+                    final List<Card> firstPair = pairs.get(1);
+                    final int firstPairValue = firstPair.get(0).getValue();
+                    final List<Card> secondPair = pairs.get(2);
+                    final int secondPairValue = secondPair.get(0).getValue();
+                    value.combination = Combination.TWO_PAIRS;
+                    final List<Card> highRankedPair = firstPairValue > secondPairValue ? firstPair : secondPair;
+                    final List<Card> lowRankedPair = firstPairValue > secondPairValue ? secondPair : firstPair;
+                    value.pattern.add(new CardOccurence(2, highRankedPair.get(0).getValue()));
+                    value.pattern.add(new CardOccurence(2, lowRankedPair.get(0).getValue()));
+                    this.finalFiveCardCombination.addAll(firstPair);
+                    this.finalFiveCardCombination.addAll(secondPair);
+                    this.cards.sort(Comparator.comparing(Card::getValue).reversed());
+                    for(final Card card: this.cards){
+                        if(card.getValue() == firstPair.get(0).getValue()
+                           || card.getValue() == secondPair.get(0).getValue())
+                            continue;
+                        this.finalFiveCardCombination.add(card);
+                        break;
+                    }
                 } else if(numberOfPairs == 1){
-                    //Pair
+                    value.combination = Combination.PAIR;
+                    final List<Card> pair = pairs.get(1);
+                    value.pattern.add(new CardOccurence(2, pair.get(0).getValue()));
+                    this.finalFiveCardCombination.addAll(pair);
+                    this.cards.sort(Comparator.comparing(Card::getValue).reversed());
+                    for(final Card card: this.cards){
+                        if(card.getValue() == pair.get(0).getValue()) continue;
+                        this.finalFiveCardCombination.add(card);
+                        if(this.finalFiveCardCombination.size() == MIN_NUMBER_OF_CARDS) break;
+                    }
                 } else if (isFlush) {
-                    this.finalFiveCardCombination.addAll(cardsOfTheSameFlush);
-                    for(final Card card: this.finalFiveCardCombination){
+                    value.combination = Combination.FLUSH;
+                    for(final Card card: cardsOfTheSameFlush){
                         value.pattern.add(new CardOccurence(1, card.getValue()));
                     }
-                    value.combination = Combination.FLUSH;
+                    this.finalFiveCardCombination.addAll(cardsOfTheSameFlush);
+                    this.finalFiveCardCombination.sort(Comparator.comparing(Card::getValue).reversed());
+
                 } else {
                     value.combination = Combination.HIGH_CARD;
-                    this.cards.sort(Comparator.comparing(Card::getValue));
-                    final int numberOfCards = this.cards.size();
-                    for(int i = MAX_NUMBER_OF_CARDS - numberOfCards; i < numberOfCards; ++i){
-                        this.finalFiveCardCombination.add(this.cards.get(i));
-                        value.pattern.add(new CardOccurence(1, this.cards.get(i).getValue()));
+                    this.cards.sort(Comparator.comparing(Card::getValue).reversed());
+                    for(final Card card: this.cards){
+                        this.finalFiveCardCombination.add(card);
+                        value.pattern.add(new CardOccurence(1, card.getValue()));
+                        if(finalFiveCardCombination.size() == MIN_NUMBER_OF_CARDS) break;
                     }
                 }
             }
@@ -261,118 +320,26 @@ public class Hand implements Comparable<Hand> {
             this.isValueChanged = false;
         }
     }
+
+    @Override
+    public int compareTo(final Hand other) {
+        if(this.getValue().combination.ordinal() > other.getValue().combination.ordinal()){
+            return 1;
+        } else if(this.getValue().combination.ordinal() < other.getValue().combination.ordinal()){
+            return -1;
+        } else {
+            for(int i = 0; i < MIN_NUMBER_OF_CARDS; ++i){
+                //this.getValue().pattern.get(0).cardValue
+            }
+        }
+        return 0;
+    }
 }
+
+
+
 
 /*
-
-void poker::Hand::evaluate() const
-{
-    Value value;
-
-    if(cards_.size() < NUM_CARDS_MAX)
-    {
-        value.combination = CombinationType::NO_HAND;
-    }
-    else
-    {
-        std::map<int, int> occurRank;
-        for(int r{Card::LOWEST_CARD_VALUE}; r <= Card::HIGHEST_CARD_VALUE; ++r)
-            occurRank[r] = 0;
-
-        std::map<Card::Suit, int> occurSuit;
-        for(int s{0}; s < Card::NUM_SUITS; ++s)
-            occurSuit[static_cast<Card::Suit>(s)] = 0;
-
-        for(const auto &card: cards_)
-        {
-            ++occurRank[card.getValue()];
-            ++occurSuit[card.getSuit()];
-        }
-
-        bool isFlush{false};
-        for(auto it = occurSuit.cbegin(); it != occurSuit.end(); ++it)
-        {
-            if(it->second == NUM_CARDS_MAX)
-            {
-                isFlush = true;
-                break;
-            }
-        }
-
-        int numPairs{0}, numTrips{0}, numFours{0}, numInARow{0},
-            maxInARow{0}, maxValInARow{0};
-        for(auto it = occurRank.cbegin(); it != occurRank.cend(); ++it)
-        {
-            switch (it->second)
-            {
-                case 0:
-                    numInARow = 0;
-                    break;
-                case 1:
-                    ++numInARow;
-                    if(it->first > maxValInARow)
-                        maxValInARow = it->first;
-                    if(numInARow > maxInARow)
-                        maxInARow = numInARow;
-                    value.pattern.emplace_back(it->first,it->second);
-                    break;
-                case 2:
-                    ++numPairs;
-                    value.pattern.emplace_back(it->first,it->second);
-                    break;
-                case 3:
-                    ++numTrips;
-                    value.pattern.emplace_back(it->first,it->second);
-                    break;
-                case 4:
-                    ++numFours;
-                    value.pattern.emplace_back(it->first,it->second);
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        if(maxInARow == NUM_CARDS_MAX - 1 &&
-           maxValInARow == static_cast<int>(Card::Rank::FIVE))
-        {
-            value.combination = isFlush ?
-                        CombinationType::STRAIGHT_FLUSH_WITH_LOW_ACE :
-                        CombinationType::STRAIGHT_WITH_LOW_ACE;
-        }
-        else if(maxInARow == NUM_CARDS_MAX)
-        {
-            bool isAceMax = maxValInARow == Card::HIGHEST_CARD_VALUE;
-            if(isFlush)
-                value.combination = isAceMax ? CombinationType::ROYAL_FLASH :
-                                               CombinationType::STRAIGHT_FLUSH;
-            else
-                value.combination = CombinationType::STRAIGHT;
-        }
-        else if(numFours > 0)
-            value.combination = CombinationType::FOUR_OF_A_KIND;
-        else if(numTrips > 0)
-            value.combination = numPairs > 0 ? CombinationType::FULL_HAUS :
-                                               CombinationType::THREE_OF_A_KIND;
-        else if(numPairs == 2)
-            value.combination = CombinationType::TWO_PAIR;
-        else if(numPairs == 1)
-            value.combination = CombinationType::PAIR;
-        else if(isFlush)
-            value.combination = CombinationType::FLUSH;
-        else
-            value.combination = CombinationType::HIGH_CARD;
-
-        std::sort(value.pattern.begin(), value.pattern.end(),
-                  [](const auto &occur1, const auto &occur2)
-        {
-            return occur1.numberOfAKind == occur2.numberOfAKind ?
-                   occur1.cardValue > occur2.cardValue :
-                   occur1.numberOfAKind > occur2.numberOfAKind;
-        });
-    }
-    value_ = value;
-}
 
 int poker::compareHandValues(const poker::Hand::Value &val1,
                                   const poker::Hand::Value &val2)
@@ -417,63 +384,4 @@ int poker::Hand::findIndexByValue(int val) const
     }
     return -1;
 }
-* */
-
-
-////////////////////////////////////
-
-/*
-* class Hand
-    {
-    public:
-        enum CombinationType
-        {
-            NO_HAND,
-            HIGH_CARD,
-            PAIR,
-            TWO_PAIR,
-            THREE_OF_A_KIND,
-            STRAIGHT_WITH_LOW_ACE,
-            STRAIGHT,
-            FLUSH,
-            FULL_HAUS,
-            FOUR_OF_A_KIND,
-            STRAIGHT_FLUSH_WITH_LOW_ACE,
-            STRAIGHT_FLUSH,
-            ROYAL_FLASH
-        };
-
-        struct Occurence
-        {
-            Occurence(int val, int num);
-            int cardValue, numberOfAKind;
-        };
-
-        struct Value
-        {
-            CombinationType combination;
-            std::vector<Occurence> pattern;
-        };
-
-        enum { NUM_CARDS_MAX = 5 };
-        explicit Hand();
-        inline auto getCardCount() const noexcept { return cards_.size(); }
-        void changeCard(Card card, int pos);
-        inline const Card& getGard(int pos) const { return cards_.at(pos); }
-        inline const Card& operator[](int pos) const { return cards_.at(pos); }
-        Value getValue() const;
-        std::string toString() const;
-        int findIndexByValue(int val) const;
-        void addCard(const Card& card);
-        void clear();
-        void setLowAceAtFirstPlace();
-
-    private:
-        std::vector<Card> cards_;
-        mutable Value value_;
-        mutable bool isValueChanged_{true};
-        void evaluate() const;
-    };
-    int compareHandValues(const Hand::Value &val1, const Hand::Value &val2);
-    std::ostream &operator<<(std::ostream &os, const Hand &hand);
 * */
