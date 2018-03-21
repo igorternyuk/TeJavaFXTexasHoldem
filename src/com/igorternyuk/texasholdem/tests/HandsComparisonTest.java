@@ -5,8 +5,6 @@ import com.igorternyuk.texasholdem.model.Hand;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -119,6 +117,98 @@ public class HandsComparisonTest {
         }
         assertEquals(Combination.TWO_PAIRS, firstHand.getCombination());
         assertEquals(Combination.FULL_HOUSE, secondHand.getCombination());
+        assertTrue(firstHand.compareTo(secondHand) < 0);
+    }
+
+    @Test
+    public void testOfTripleAgainstQuads(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.ACE));
+        communityCards.add(new Card(Suit.HEARTS, Rank.KING));
+        communityCards.add(new Card(Suit.HEARTS, Rank.THREE));
+        communityCards.add(new Card(Suit.SPADES, Rank.FIVE));
+        communityCards.add(new Card(Suit.CLUBS, Rank.FIVE));
+        final Hand firstHand = new Hand();
+        firstHand.addCard(new Card(Suit.DIAMONDS, Rank.KING));
+        firstHand.addCard(new Card(Suit.HEARTS, Rank.KING));
+        final Hand secondHand = new Hand();
+        secondHand.addCard(new Card(Suit.HEARTS, Rank.FIVE));
+        secondHand.addCard(new Card(Suit.CLUBS, Rank.FIVE));
+        for(final Card card: communityCards){
+            firstHand.addCard(card);
+            secondHand.addCard(card);
+        }
+        assertEquals(Combination.FULL_HOUSE, firstHand.getCombination());
+        assertEquals(Combination.FOUR_OF_A_KIND, secondHand.getCombination());
+        assertTrue(firstHand.compareTo(secondHand) < 0);
+    }
+
+    @Test
+    public void testOfQuadsAgainstQuadsWithKicker(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.THREE));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.KING));
+        communityCards.add(new Card(Suit.HEARTS, Rank.KING));
+        communityCards.add(new Card(Suit.SPADES, Rank.KING));
+        communityCards.add(new Card(Suit.CLUBS, Rank.KING));
+        final Hand firstHand = new Hand();
+        firstHand.addCard(new Card(Suit.DIAMONDS, Rank.JACK));
+        firstHand.addCard(new Card(Suit.HEARTS, Rank.FIVE));
+        final Hand secondHand = new Hand();
+        secondHand.addCard(new Card(Suit.HEARTS, Rank.QUEEN));
+        secondHand.addCard(new Card(Suit.CLUBS, Rank.FOUR));
+        for(final Card card: communityCards){
+            firstHand.addCard(card);
+            secondHand.addCard(card);
+        }
+        assertEquals(Combination.FOUR_OF_A_KIND, firstHand.getCombination());
+        assertEquals(Combination.FOUR_OF_A_KIND, secondHand.getCombination());
+        assertTrue(firstHand.compareTo(secondHand) < 0);
+    }
+
+    @Test
+    public void testOfTripleAgainstTripleWithKicker(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.THREE));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.TWO));
+        communityCards.add(new Card(Suit.HEARTS, Rank.KING));
+        communityCards.add(new Card(Suit.SPADES, Rank.KING));
+        communityCards.add(new Card(Suit.CLUBS, Rank.KING));
+        final Hand firstHand = new Hand();
+        firstHand.addCard(new Card(Suit.DIAMONDS, Rank.JACK));
+        firstHand.addCard(new Card(Suit.HEARTS, Rank.FIVE));
+        final Hand secondHand = new Hand();
+        secondHand.addCard(new Card(Suit.HEARTS, Rank.SIX));
+        secondHand.addCard(new Card(Suit.DIAMONDS, Rank.SEVEN));
+        for(final Card card: communityCards){
+            firstHand.addCard(card);
+            secondHand.addCard(card);
+        }
+        assertEquals(Combination.THREE_OF_A_KIND, firstHand.getCombination());
+        assertEquals(Combination.THREE_OF_A_KIND, secondHand.getCombination());
+        assertTrue(firstHand.compareTo(secondHand) > 0);
+    }
+
+    @Test
+    public void testOfStraightAgainstStraightWithLowAce(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.THREE));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.TWO));
+        communityCards.add(new Card(Suit.HEARTS, Rank.NINE));
+        communityCards.add(new Card(Suit.SPADES, Rank.FIVE));
+        communityCards.add(new Card(Suit.CLUBS, Rank.EIGHT));
+        final Hand firstHand = new Hand();
+        firstHand.addCard(new Card(Suit.DIAMONDS, Rank.ACE));
+        firstHand.addCard(new Card(Suit.HEARTS, Rank.FOUR));
+        final Hand secondHand = new Hand();
+        secondHand.addCard(new Card(Suit.HEARTS, Rank.SIX));
+        secondHand.addCard(new Card(Suit.DIAMONDS, Rank.SEVEN));
+        for(final Card card: communityCards){
+            firstHand.addCard(card);
+            secondHand.addCard(card);
+        }
+        assertEquals(Combination.STRAIGHT_WITH_LOW_ACE, firstHand.getCombination());
+        assertEquals(Combination.STRAIGHT, secondHand.getCombination());
         assertTrue(firstHand.compareTo(secondHand) < 0);
     }
 }

@@ -22,8 +22,8 @@ public class Hand implements Comparable<Hand> {
         PAIR("Pair"),
         TWO_PAIRS("Two pairs"),
         THREE_OF_A_KIND("Three of a kind"),
-        STRAIGHT("Straight"),
         STRAIGHT_WITH_LOW_ACE("Straight with low ace"),
+        STRAIGHT("Straight"),
         FLUSH("Flush"),
         FULL_HOUSE("Full house"),
         FOUR_OF_A_KIND("Quads"),
@@ -47,7 +47,7 @@ public class Hand implements Comparable<Hand> {
     private static final int MIN_NUMBER_OF_CARDS = 5;
     private List<Card> cards = new ArrayList<>();
     private List<Card> holeCards = new ArrayList<>();
-    private Combination combination;
+    private Combination combination = Combination.NO_HAND;
     private final List<Card> finalFiveCardCombination = new ArrayList<>(MIN_NUMBER_OF_CARDS);
     private boolean isHandChanged = true;
 

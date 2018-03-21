@@ -1,5 +1,7 @@
 package com.igorternyuk.texasholdem.model;
 
+import com.igorternyuk.texasholdem.model.player.AbstractPlayer;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -44,7 +46,7 @@ public class Deck {
         return this.cards.size();
     }
 
-    public void deal(final Player player){
+    public void deal(final AbstractPlayer player){
         if(!this.cards.isEmpty()){
             player.addCard(top());
         } else {
@@ -52,7 +54,7 @@ public class Deck {
         }
     }
 
-    private Card top(){
+    public Card top(){
         final Card topCard = this.cards.get(this.cards.size() - 1);
         this.cards.remove(topCard);
         return topCard;
