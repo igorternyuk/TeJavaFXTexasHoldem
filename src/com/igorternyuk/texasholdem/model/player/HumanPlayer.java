@@ -39,4 +39,10 @@ public class HumanPlayer extends AbstractPlayer{
         }
         payToPot();
     }
+
+    @Override
+    public String toString(){
+        return String.format("%s\n%s\nMoney:%8.3f Bet:%8.3f", this.getName(), this.getHand(), this.getMoneyBalance(),
+                this.getBetAmount());
+    }
 }

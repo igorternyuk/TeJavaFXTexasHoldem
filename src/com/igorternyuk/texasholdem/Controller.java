@@ -8,6 +8,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 
 import java.net.URL;
@@ -19,31 +20,45 @@ public class Controller implements Initializable{
     private Canvas canvas;
     private GraphicsContext gc;
 
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        this.gc = canvas.getGraphicsContext2D();
+        render();
+    }
+
     public void increaseHumanPlayerBet(){
         this.game.increaseHumanPlayerBetAmount();
+        render();
     }
 
     public void decreaseHumanPlayerBet(){
         this.game.decreaseHumanPlayerBetAmount();
+        render();
     }
 
     public void onBtnNewGameClicked(ActionEvent event) {
         this.game.prepareNewGame();
+        render();
     }
 
     public void onBtnNewRoundClicked(ActionEvent event) {
         this.game.startNewRound();
+        render();
     }
 
     public void onBtnBetClicked(ActionEvent event) {
         this.game.humanPlayerBet();
+        render();
     }
 
     public void onBtnReraiseClicked(ActionEvent event) {
         this.game.humanPlayerReraise();
+        render();
     }
 
     public void onBtnFoldClicked(ActionEvent event) {
+        this.game.humanPlayerFold();
+        render();
     }
 
     public void onBtnNextStepClicked(ActionEvent event) {
@@ -63,8 +78,14 @@ public class Controller implements Initializable{
         }
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        this.gc = canvas.getGraphicsContext2D();
+    private void render() {
+        Renderer.renderTable(this.gc);
+        Renderer.renderPlayerCards(this.gc, this.game);
+        Renderer.renderPlayersInfo(this.gc, this.game);
+        Renderer.renderGameInfo(this.gc, this.game);
+        Renderer.renderCommunityCards(this.gc, this.game);
+        //Renderer.renderCommunityCards(this.gc, this.game);
     }
+
+
 }

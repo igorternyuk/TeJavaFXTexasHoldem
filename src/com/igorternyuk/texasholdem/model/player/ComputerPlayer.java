@@ -50,4 +50,13 @@ public class ComputerPlayer extends AbstractPlayer {
         }
         payToPot();
     }
+
+    @Override
+    public String toString(){
+        if(this.game.getGameStatus().equals(GameStatus.SHOWDOWN)) {
+            return String.format("%s\n%s\nMoney:%8.3f", this.getName(), this.getHand(), this.getMoneyBalance());
+        } else {
+            return String.format("%s\nMoney:%8.3f", this.getName(), this.getMoneyBalance());
+        }
+    }
 }

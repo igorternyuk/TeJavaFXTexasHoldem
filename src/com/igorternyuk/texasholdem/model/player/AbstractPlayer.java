@@ -11,7 +11,7 @@ public abstract class AbstractPlayer {
     Game game;
     private String name;
     private PlayerType playerType;
-    PlayerRole playerRole;
+    PlayerRole playerRole = PlayerRole.REGULAR;
     private PlayerStatus playerStatus = PlayerStatus.IN_PLAY;
     final Hand hand = new Hand();
     private double money, initMoney;

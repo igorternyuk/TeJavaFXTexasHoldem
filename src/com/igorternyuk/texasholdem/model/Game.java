@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
  */
 public class Game {
     public static final double ANTE = 13;
-    private static final int NUMBER_OF_COMMUNITY_CARDS = 5;
+    public static final int NUMBER_OF_COMMUNITY_CARDS = 5;
     private static final Map<GameStatus, Double> MIN_BET_MAP = createMinBetMap();
     private static final int MAX_NUMBER_OF_PLAYERS = 6;
     private static final int INITIAL_PLAYER_CARDS_NUMBER = 2;
@@ -28,7 +28,6 @@ public class Game {
     private double maxBet = 0;
 
     public Game(){
-        prepareNewGame();
         this.humanPlayer = new HumanPlayer(this, "You", PLAYER_INITIAL_MONEY);
         this.players.add(this.humanPlayer);
         for(int i = 1; i < MAX_NUMBER_OF_PLAYERS; ++i){
