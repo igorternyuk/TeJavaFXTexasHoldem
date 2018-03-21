@@ -45,6 +45,9 @@ public class ComputerPlayer extends AbstractPlayer {
         } else {
             setBetAmount(this.game.getMinBet() * betCoefficients.get(this.hand.getCombination()));
         }
+        if(this.betAmount < this.game.getMinBet()){
+            this.betAmount = this.game.getMinBet();
+        }
         payToPot();
     }
 }

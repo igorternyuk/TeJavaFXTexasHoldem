@@ -8,16 +8,16 @@ import com.igorternyuk.texasholdem.model.Hand;
  * Created by igor on 18.03.18.
  */
 public abstract class AbstractPlayer {
-    protected Game game;
-    protected String name;
-    protected PlayerType playerType;
-    protected PlayerRole playerRole;
-    protected PlayerStatus playerStatus = PlayerStatus.IN_PLAY;
-    protected final Hand hand = new Hand();
-    protected double money, initMoney;
-    protected double betAmount = 0;
+    Game game;
+    private String name;
+    private PlayerType playerType;
+    PlayerRole playerRole;
+    private PlayerStatus playerStatus = PlayerStatus.IN_PLAY;
+    final Hand hand = new Hand();
+    private double money, initMoney;
+    double betAmount = 0;
 
-    public AbstractPlayer(final Game game, final String name, final double money, final PlayerType playerType){
+    AbstractPlayer(final Game game, final String name, final double money, final PlayerType playerType){
         this.game = game;
         this.name = name;
         this.playerType = playerType;
@@ -63,8 +63,16 @@ public abstract class AbstractPlayer {
         return this.betAmount;
     }
 
-    protected void setBetAmount(double betAmount) {
+    public void setBetAmount(double betAmount) {
         this.betAmount = betAmount;
+    }
+
+    public PlayerStatus getPlayerStatus() {
+        return this.playerStatus;
+    }
+
+    public void setPlayerStatus(PlayerStatus playerStatus) {
+        this.playerStatus = playerStatus;
     }
 
     public void ante(){
@@ -77,9 +85,9 @@ public abstract class AbstractPlayer {
         this.money -= this.betAmount;
     }
 
-    public void takeGain(){
+    public void takeGain(final double gain){
         if(this.playerStatus.equals(PlayerStatus.WON) || this.playerStatus.equals(PlayerStatus.TIE)){
-            this.money += game.getGain();
+            this.money += gain;
         }
     }
 

@@ -34,6 +34,9 @@ public class HumanPlayer extends AbstractPlayer{
                 }
             }
         }
+        if(this.betAmount < this.game.getMinBet()){
+            this.betAmount = this.game.getMinBet();
+        }
         payToPot();
     }
 }

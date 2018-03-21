@@ -1,22 +1,16 @@
 package com.igorternyuk.texasholdem.model;
 
-import com.igorternyuk.texasholdem.model.player.AbstractPlayer;
-import com.igorternyuk.texasholdem.model.player.ComputerPlayer;
-import com.igorternyuk.texasholdem.model.player.HumanPlayer;
-import com.igorternyuk.texasholdem.model.player.PlayerRole;
+import com.igorternyuk.texasholdem.model.player.*;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by igor on 20.03.18.
  */
 public class Game {
     public static final double ANTE = 13;
-    public static final double MIN_BET = 20;
+    private static final int NUMBER_OF_COMMUNITY_CARDS = 5;
     private static final Map<GameStatus, Double> MIN_BET_MAP = createMinBetMap();
     private static final int MAX_NUMBER_OF_PLAYERS = 6;
     private static final int INITIAL_PLAYER_CARDS_NUMBER = 2;
@@ -26,14 +20,11 @@ public class Game {
     private HumanPlayer humanPlayer;
     private List<AbstractPlayer> players = new ArrayList<>(MAX_NUMBER_OF_PLAYERS);
     private final Deck deck = new Deck();
-    private final List<Card> communityCards = new ArrayList<>(5);
-    private int dealerIndex = 0, smallBlindIndex = 1, bigBlindIndex = 2;
-    int[] playerOrders = new int[MAX_NUMBER_OF_PLAYERS];
+    private final List<Card> communityCards = new ArrayList<>(NUMBER_OF_COMMUNITY_CARDS);
+    private int dealerIndex = 0, smallBlindIndex = 0, bigBlindIndex = 0, humanPlayerIndexInTheQueue = 0;
+    private int[] playersQueue = new int[MAX_NUMBER_OF_PLAYERS];
     private double pot = 0;
-    private List<AbstractPlayer> afterGameRanking = new ArrayList<>(MAX_NUMBER_OF_PLAYERS);
-    private double gain;
-    private int nextBetPlayerIndex = 0;
-    private boolean isWaitingForHumanBet = false;
+    private boolean waitingForHumanBet = false;
     private double maxBet = 0;
 
     public Game(){
@@ -67,20 +58,35 @@ public class Game {
         this.deck.populate();
         this.deck.shuffle();
         this.communityCards.clear();
+        this.players.forEach(AbstractPlayer::clearCards);
         dealCardsToPlayers();
+        updateDealerAndBlinds();
+        this.pot = 0.0;
         this.players.forEach(AbstractPlayer::ante);
-        preflop();
+        this.maxBet = MIN_BET_MAP.get(this.gameStatus);
+        beforeHumanPlayerBets();
         ++this.roundNumber;
+    }
+
+    private void dealCardsToPlayers(){
+        this.players.forEach(player -> {
+            for(int i = 0; i < INITIAL_PLAYER_CARDS_NUMBER; ++i) {
+                this.deck.deal(player);
+            }
+        });
     }
 
     private void updateDealerAndBlinds(){
         if(this.roundNumber == 0){
-            dealerIndex = 0;
-            smallBlindIndex = 1;
-            bigBlindIndex = 2;
+            smallBlindIndex = dealerIndex + 1;
+            bigBlindIndex = smallBlindIndex + 1;
             this.humanPlayer.setPlayerRole(PlayerRole.DEALER);
             this.players.get(smallBlindIndex).setPlayerRole(PlayerRole.SMALL_BLIND);
             this.players.get(bigBlindIndex).setPlayerRole(PlayerRole.BIG_BLIND);
+            final int numberOfSpecialRoles = PlayerRole.values().length - 1;
+            for(int i = 0; i < MAX_NUMBER_OF_PLAYERS; ++i){
+                this.playersQueue[i] = i + (i < numberOfSpecialRoles ? numberOfSpecialRoles : -numberOfSpecialRoles);
+            }
         } else {
             ++this.dealerIndex;
             this.dealerIndex %= MAX_NUMBER_OF_PLAYERS;
@@ -94,64 +100,183 @@ public class Game {
             this.players.get(this.bigBlindIndex).setPlayerRole(PlayerRole.BIG_BLIND);
             rotateOrderIndices();
         }
+        this.humanPlayerIndexInTheQueue = findHumanPlayerOrder();
     }
 
     private void rotateOrderIndices(){
-        int last = playerOrders[playerOrders.length - 1];
-        for(int i = playerOrders.length - 1; i > 0; --i){
-            playerOrders[i] = playerOrders[i - 1];
+        int last = playersQueue[playersQueue.length - 1];
+        for(int i = playersQueue.length - 1; i > 0; --i){
+            playersQueue[i] = playersQueue[i - 1];
         }
-        playerOrders[0] = last;
+        playersQueue[0] = last;
     }
 
+    private int findHumanPlayerOrder(){
+        for (int i : this.playersQueue) {
+            final int currIndex = this.playersQueue[i];
+            if(this.players.get(currIndex).getPlayerType().isHuman()){
+                return i;
+            }
+        }
+        return -1;
+    }
 
-    private void dealCardsToPlayers(){
-        this.players.forEach(player -> {
-            for(int i = 0; i < INITIAL_PLAYER_CARDS_NUMBER; ++i) {
-                this.deck.deal(player);
+    private void beforeHumanPlayerBets(){
+        for(int i = 0; i < humanPlayerIndexInTheQueue; ++i){
+            final AbstractPlayer currPlayer = this.players.get(this.playersQueue[i]);
+            currPlayer.bet();
+            if(this.maxBet < currPlayer.getBetAmount()){
+                this.maxBet = currPlayer.getBetAmount();
+            }
+        }
+        waitingForHumanBet = true;
+    }
+
+    public void humanPlayerBet(){
+        if(waitingForHumanBet){
+            this.humanPlayer.bet();
+            if(this.maxBet < this.humanPlayer.getBetAmount()){
+                this.maxBet = this.humanPlayer.getBetAmount();
+            }
+            waitingForHumanBet = false;
+            afterHumanPlayerBets();
+            callForAllComputerPlayers();
+        }
+    }
+
+    public boolean isWaitingForHumanBet(){
+        return this.waitingForHumanBet;
+    }
+
+    private void afterHumanPlayerBets(){
+        for(int i = humanPlayerIndexInTheQueue + 1; i < this.playersQueue.length; ++i){
+            final AbstractPlayer currPlayer = this.players.get(this.playersQueue[i]);
+            currPlayer.bet();
+            if(this.maxBet < currPlayer.getBetAmount()){
+                this.maxBet = currPlayer.getBetAmount();
+            }
+        }
+    }
+
+    private void callForAllComputerPlayers(){
+        this.players.stream().filter(player -> player.getPlayerType().isComputer()).forEach(player -> {
+            if(player.getBetAmount() < this.maxBet){
+                player.setBetAmount(this.maxBet);
+                player.bet();
             }
         });
     }
 
-    public void preflop(){
-        updateDealerAndBlinds();
-        this.players.get(smallBlindIndex).bet();
-        this.players.get(bigBlindIndex).bet();
-        int nextAfterBigBlind = this.bigBlindIndex + 1;
-        nextAfterBigBlind %= MAX_NUMBER_OF_PLAYERS;
-        double maxBet = 0;
+    public void increaseHumanPlayerBetAmount(){
+        this.humanPlayer.increaseBet();
+    }
 
+    public void decreaseHumanPlayerBetAmount(){
+        this.humanPlayer.decreaseBet();
+    }
 
-        for(int i = 0; i < playerOrders.length; ++i){
-            if(this.players.get(i).getPlayerType().isHuman()){
-                this.isWaitingForHumanBet = true;
-                if((i + 1) < playerOrders.length){
-                    this.nextBetPlayerIndex = i + 1;
+    public void humanPlayerReraise(){
+        if(this.humanPlayer.getBetAmount() > this.maxBet){
+            this.humanPlayer.bet();
+            this.maxBet = this.humanPlayer.getBetAmount();
+            callForAllComputerPlayers();
+        }
+    }
+
+    public void nextStep(){
+        switch (this.gameStatus){
+            case PREFLOP:
+                for(int i = 0; i < 3; ++i){
+                    communityCards.add(this.deck.top());
+                }
+                this.gameStatus = GameStatus.FLOP;
+                beforeHumanPlayerBets();
+                break;
+            case FLOP:
+                communityCards.add(this.deck.top());
+                this.gameStatus = GameStatus.TURN;
+                beforeHumanPlayerBets();
+                break;
+            case TURN:
+                communityCards.add(this.deck.top());
+                this.gameStatus = GameStatus.RIVER;
+                beforeHumanPlayerBets();
+                break;
+            case RIVER:
+                this.gameStatus = GameStatus.SHOWDOWN;
+                determineWinners();
+                break;
+            case SHOWDOWN:
+                break;
+        }
+        this.maxBet = MIN_BET_MAP.get(this.gameStatus);
+    }
+
+    //TODO human player fold case
+    public void humanPlayerFold(){
+        this.humanPlayer.fold();
+        int numberOfRemainingSteps = 0;
+        switch (this.gameStatus){
+            case PREFLOP:
+                numberOfRemainingSteps = 3;
+                break;
+            case FLOP:
+                numberOfRemainingSteps = 2;
+                break;
+            case TURN:
+                numberOfRemainingSteps = 1;
+                break;
+            case RIVER:
+            case SHOWDOWN:
+                default:
+                numberOfRemainingSteps = 0;
+                break;
+        }
+        for(int i = 0; i < numberOfRemainingSteps; ++i){
+            List<AbstractPlayer> remainingPlayers = this.players.stream()
+                    .filter(player -> player.getPlayerStatus().equals(PlayerStatus.IN_PLAY)).collect(Collectors.toList());
+            remainingPlayers.forEach(player -> {
+                player.bet();
+                if(this.maxBet < player.getBetAmount()){
+                    this.maxBet = player.getBetAmount();
+                }
+            });
+            callForAllComputerPlayers();
+            nextStep();
+        }
+    }
+
+    private void determineWinners(){
+        List<AbstractPlayer> remainingPlayers = this.players.stream()
+                .filter(player -> player.getPlayerStatus().equals(PlayerStatus.IN_PLAY)).collect(Collectors.toList());
+        remainingPlayers.sort(Comparator.comparing(AbstractPlayer::getHand).reversed());
+        int numberOfTiedPlayers = 0;
+        for(int i = 0; i < remainingPlayers.size() - 1; ++i){
+            final Hand.Combination currPlayerCombination = remainingPlayers.get(i).getHand().getCombination();
+            final Hand.Combination nextPlayerCombination = remainingPlayers.get(i + 1).getHand().getCombination();
+            if(currPlayerCombination.equals(nextPlayerCombination)){
+                ++numberOfTiedPlayers;
+            } else {
+                break;
+            }
+        }
+        if(numberOfTiedPlayers == 0){
+            final AbstractPlayer winner = remainingPlayers.get(0);
+            winner.setPlayerStatus(PlayerStatus.WON);
+            winner.takeGain(this.pot);
+            remainingPlayers.subList(1, remainingPlayers.size())
+                    .forEach(player -> player.setPlayerStatus(PlayerStatus.LOST));
+        } else {
+            final double splittedPot = this.pot / numberOfTiedPlayers;
+            for(int i = 0; i < remainingPlayers.size(); ++i){
+                if(i < numberOfTiedPlayers) {
+                    remainingPlayers.get(i).setPlayerStatus(PlayerStatus.TIE);
+                    remainingPlayers.get(i).takeGain(splittedPot);
+                } else {
+                    remainingPlayers.get(i).setPlayerStatus(PlayerStatus.LOST);
                 }
             }
-            this.players.get(i).bet();
-            if(this.players.get(i).getBetAmount() > maxBet){
-                maxBet = this.players.get(i).getBetAmount();
-            }
         }
-    }
-
-    public void humanBet(){
-        this.isWaitingForHumanBet = false;
-    }
-
-    public void flop(){
-        for(int i = 0; i < 3; ++i){
-            communityCards.add(this.deck.top());
-        }
-    }
-
-    public void turn(){
-
-    }
-
-    public void river(){
-
     }
 
     public void payToPot(final double money){
@@ -194,19 +319,7 @@ public class Game {
         return this.pot;
     }
 
-    private void nextRound(){
-
-    }
-
-    public void showDown(){
-
-    }
-
     public double getGain() {
-        return this.gain;
-    }
-
-    public void fold(){
-
+        return this.pot;
     }
 }
