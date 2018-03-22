@@ -20,6 +20,10 @@ public class HumanPlayer extends AbstractPlayer{
         this.betAmount -= BET_INCREMENT;
     }
 
+    public boolean isFolded() {
+        return this.getPlayerStatus().equals(PlayerStatus.FOLDED);
+    }
+
     @Override
     public void bet() {
         if(game.getGameStatus().equals(GameStatus.SHOWDOWN)) return;

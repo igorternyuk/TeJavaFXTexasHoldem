@@ -109,11 +109,6 @@ public class Game {
     private void rotateOrderIndices(){
         int last = playersQueue[playersQueue.length - 1];
         System.arraycopy(playersQueue, 0, playersQueue, 1, playersQueue.length - 1);
-        /*
-        for(int i = playersQueue.length - 1; i > 0; --i){
-            playersQueue[i] = playersQueue[i - 1];
-        }
-        * */
         playersQueue[0] = last;
     }
 
@@ -192,7 +187,11 @@ public class Game {
     }
 
     public void nextStep(){
-        if(waitingForHumanBet) return;
+        if(!this.humanPlayer.isFolded()){
+            if(waitingForHumanBet){
+                return;
+            }
+        }
         switch (this.gameStatus){
             case PREFLOP:
                 for(int i = 0; i < 3; ++i){
@@ -200,19 +199,31 @@ public class Game {
                     this.players.forEach(player -> player.addCard(communityCards.get(communityCards.size() - 1)));
                 }
                 this.gameStatus = GameStatus.FLOP;
-                beforeHumanPlayerBets();
+                if(this.humanPlayer.isFolded()){
+                    autoNextStep();
+                } else {
+                    beforeHumanPlayerBets();
+                }
                 break;
             case FLOP:
                 communityCards.add(this.deck.top());
                 this.players.forEach(player -> player.addCard(communityCards.get(communityCards.size() - 1)));
                 this.gameStatus = GameStatus.TURN;
-                beforeHumanPlayerBets();
+                if(this.humanPlayer.isFolded()){
+                    autoNextStep();
+                } else {
+                    beforeHumanPlayerBets();
+                }
                 break;
             case TURN:
                 communityCards.add(this.deck.top());
                 this.players.forEach(player -> player.addCard(communityCards.get(communityCards.size() - 1)));
                 this.gameStatus = GameStatus.RIVER;
-                beforeHumanPlayerBets();
+                if(this.humanPlayer.isFolded()){
+                    autoNextStep();
+                } else {
+                    beforeHumanPlayerBets();
+                }
                 break;
             case RIVER:
                 this.gameStatus = GameStatus.SHOWDOWN;
@@ -224,38 +235,22 @@ public class Game {
         this.maxBet = MIN_BET_MAP.get(this.gameStatus);
     }
 
-    //TODO human player fold case
     public void humanPlayerFold(){
         this.humanPlayer.fold();
-        int numberOfRemainingSteps;
-        switch (this.gameStatus){
-            case PREFLOP:
-                numberOfRemainingSteps = 4;
-                break;
-            case FLOP:
-                numberOfRemainingSteps = 3;
-                break;
-            case TURN:
-                numberOfRemainingSteps = 2;
-                break;
-            case RIVER:
-            case SHOWDOWN:
-                default:
-                numberOfRemainingSteps = 0;
-                break;
-        }
-        for(int i = 0; i < numberOfRemainingSteps; ++i){
-            List<AbstractPlayer> remainingPlayers = this.players.stream()
-                    .filter(player -> player.getPlayerStatus().equals(PlayerStatus.IN_PLAY)).collect(Collectors.toList());
-            remainingPlayers.forEach(player -> {
-                player.bet();
-                if(this.maxBet < player.getBetAmount()){
-                    this.maxBet = player.getBetAmount();
-                }
-            });
-            callForAllComputerPlayers();
-            nextStep();
-        }
+        nextStep();
+    }
+
+    private void autoNextStep(){
+        List<AbstractPlayer> remainingPlayers = this.players.stream()
+                .filter(player -> player.getPlayerStatus().equals(PlayerStatus.IN_PLAY)).collect(Collectors.toList());
+        remainingPlayers.forEach(player -> {
+            player.bet();
+            if(this.maxBet < player.getBetAmount()){
+                this.maxBet = player.getBetAmount();
+            }
+        });
+        callForAllComputerPlayers();
+        nextStep();
     }
 
     private void determineWinners(){
