@@ -42,7 +42,12 @@ public class HumanPlayer extends AbstractPlayer{
 
     @Override
     public String toString(){
-        return String.format("%s\n%s\nMoney:%8.3f Bet:%8.3f", this.getName(), this.getHand(), this.getMoneyBalance(),
-                this.getBetAmount());
+        if(this.game.getGameStatus().equals(GameStatus.SHOWDOWN)) {
+            return String.format("%s\n%s\nMoney:%8.3f$ Bet:%8.3f$ %s", this.getName(), this.getHand(),
+                    this.getMoneyBalance(), this.getBetAmount(), this.getPlayerStatus());
+        } else {
+            return String.format("%s\n%s\nMoney:%8.3f$ Bet:%8.3f$", this.getName(), this.getHand(),
+                    this.getMoneyBalance(), this.getBetAmount());
+        }
     }
 }

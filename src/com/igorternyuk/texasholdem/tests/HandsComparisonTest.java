@@ -19,10 +19,6 @@ import static org.junit.Assert.assertTrue;
  * Created by igor on 20.03.18.
  */
 public class HandsComparisonTest {
-    @Before
-    public void setUp(){
-
-    }
 
     @Test
     public void testOfHighCard(){
@@ -45,6 +41,29 @@ public class HandsComparisonTest {
         assertEquals(Combination.HIGH_CARD, firstHand.getCombination());
         assertEquals(Combination.HIGH_CARD, secondHand.getCombination());
         assertTrue(firstHand.compareTo(secondHand) > 0);
+    }
+
+    @Test
+    public void testOfPairTie(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.JACK));
+        communityCards.add(new Card(Suit.HEARTS, Rank.SIX));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.TWO));
+        communityCards.add(new Card(Suit.SPADES, Rank.SEVEN));
+        communityCards.add(new Card(Suit.CLUBS, Rank.KING));
+        final Hand firstHand = new Hand();
+        firstHand.addCard(new Card(Suit.CLUBS, Rank.FOUR));
+        firstHand.addCard(new Card(Suit.SPADES, Rank.FOUR));
+        final Hand secondHand = new Hand();
+        secondHand.addCard(new Card(Suit.HEARTS, Rank.FIVE));
+        secondHand.addCard(new Card(Suit.CLUBS, Rank.FIVE));
+        for(final Card card: communityCards){
+            firstHand.addCard(card);
+            secondHand.addCard(card);
+        }
+        assertEquals(Combination.PAIR, firstHand.getCombination());
+        assertEquals(Combination.PAIR, secondHand.getCombination());
+        assertTrue(firstHand.compareTo(secondHand) < 0);
     }
 
     @Test
@@ -117,6 +136,102 @@ public class HandsComparisonTest {
         }
         assertEquals(Combination.TWO_PAIRS, firstHand.getCombination());
         assertEquals(Combination.FULL_HOUSE, secondHand.getCombination());
+        assertTrue(firstHand.compareTo(secondHand) < 0);
+    }
+
+    @Test
+    public void testOfTwoPaisAgainstTwoPairs(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.ACE));
+        communityCards.add(new Card(Suit.HEARTS, Rank.KING));
+        communityCards.add(new Card(Suit.HEARTS, Rank.THREE));
+        communityCards.add(new Card(Suit.SPADES, Rank.FIVE));
+        communityCards.add(new Card(Suit.CLUBS, Rank.TEN));
+        final Hand firstHand = new Hand();
+        firstHand.addCard(new Card(Suit.DIAMONDS, Rank.KING));
+        firstHand.addCard(new Card(Suit.HEARTS, Rank.ACE));
+        final Hand secondHand = new Hand();
+        secondHand.addCard(new Card(Suit.HEARTS, Rank.TEN));
+        secondHand.addCard(new Card(Suit.CLUBS, Rank.FIVE));
+        for(final Card card: communityCards){
+            firstHand.addCard(card);
+            secondHand.addCard(card);
+        }
+        assertEquals(Combination.TWO_PAIRS, firstHand.getCombination());
+        assertEquals(Combination.TWO_PAIRS, secondHand.getCombination());
+        assertTrue(firstHand.compareTo(secondHand) > 0);
+    }
+
+    @Test
+    public void testOfTwoPairsAgainstFlush(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.HEARTS, Rank.ACE));
+        communityCards.add(new Card(Suit.SPADES, Rank.NINE));
+        communityCards.add(new Card(Suit.HEARTS, Rank.NINE));
+        communityCards.add(new Card(Suit.HEARTS, Rank.KING));
+        communityCards.add(new Card(Suit.HEARTS, Rank.FIVE));
+        final Hand firstHand = new Hand();
+        firstHand.addCard(new Card(Suit.DIAMONDS, Rank.ACE));
+        firstHand.addCard(new Card(Suit.DIAMONDS, Rank.FOUR));
+        final Hand secondHand = new Hand();
+        secondHand.addCard(new Card(Suit.SPADES, Rank.ACE));
+        secondHand.addCard(new Card(Suit.HEARTS, Rank.TWO));
+        for(final Card card: communityCards){
+            firstHand.addCard(card);
+            secondHand.addCard(card);
+        }
+        assertEquals(Combination.TWO_PAIRS, firstHand.getCombination());
+        assertEquals(Combination.FLUSH, secondHand.getCombination());
+        assertTrue(firstHand.compareTo(secondHand) < 0);
+    }
+
+    @Test
+    public void testOfTwoPairsTie(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.CLUBS, Rank.FOUR));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.FOUR));
+        communityCards.add(new Card(Suit.CLUBS, Rank.JACK));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.JACK));
+        communityCards.add(new Card(Suit.CLUBS, Rank.TEN));
+        final Hand firstHand = new Hand();
+        firstHand.addCard(new Card(Suit.CLUBS, Rank.THREE));
+        firstHand.addCard(new Card(Suit.DIAMONDS, Rank.KING));
+        final Hand secondHand = new Hand();
+        secondHand.addCard(new Card(Suit.DIAMONDS, Rank.QUEEN));
+        secondHand.addCard(new Card(Suit.HEARTS, Rank.SIX));
+        for(final Card card: communityCards){
+            firstHand.addCard(card);
+            secondHand.addCard(card);
+        }
+        assertEquals(Combination.TWO_PAIRS, firstHand.getCombination());
+        System.out.println(firstHand);
+        assertEquals(Combination.TWO_PAIRS, secondHand.getCombination());
+        System.out.println(secondHand);
+        assertTrue(firstHand.compareTo(secondHand) > 0);
+    }
+
+    @Test
+    public void testOfSituationWithThreePairs(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.CLUBS, Rank.FOUR));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.FOUR));
+        communityCards.add(new Card(Suit.CLUBS, Rank.JACK));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.JACK));
+        communityCards.add(new Card(Suit.CLUBS, Rank.TEN));
+        final Hand firstHand = new Hand();
+        firstHand.addCard(new Card(Suit.HEARTS, Rank.TEN));
+        firstHand.addCard(new Card(Suit.DIAMONDS, Rank.KING));
+        final Hand secondHand = new Hand();
+        secondHand.addCard(new Card(Suit.DIAMONDS, Rank.ACE));
+        secondHand.addCard(new Card(Suit.HEARTS, Rank.ACE));
+        for(final Card card: communityCards){
+            firstHand.addCard(card);
+            secondHand.addCard(card);
+        }
+        assertEquals(Combination.TWO_PAIRS, firstHand.getCombination());
+        System.out.println(firstHand);
+        assertEquals(Combination.TWO_PAIRS, secondHand.getCombination());
+        System.out.println(secondHand);
         assertTrue(firstHand.compareTo(secondHand) < 0);
     }
 

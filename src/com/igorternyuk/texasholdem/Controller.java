@@ -26,12 +26,12 @@ public class Controller implements Initializable{
         render();
     }
 
-    public void increaseHumanPlayerBet(){
+    void increaseHumanPlayerBet(){
         this.game.increaseHumanPlayerBetAmount();
         render();
     }
 
-    public void decreaseHumanPlayerBet(){
+    void decreaseHumanPlayerBet(){
         this.game.decreaseHumanPlayerBetAmount();
         render();
     }
@@ -63,6 +63,7 @@ public class Controller implements Initializable{
 
     public void onBtnNextStepClicked(ActionEvent event) {
         this.game.nextStep();
+        render();
     }
 
     public void onBtnExitClicked(ActionEvent event) {

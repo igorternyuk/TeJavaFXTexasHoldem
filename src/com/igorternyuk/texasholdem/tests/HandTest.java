@@ -11,6 +11,7 @@ import static com.igorternyuk.texasholdem.model.Card.Rank;
 import static com.igorternyuk.texasholdem.model.Card.Suit;
 import static com.igorternyuk.texasholdem.model.Hand.Combination;
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * Created by igor on 19.03.18.
@@ -123,6 +124,82 @@ public class HandTest {
             hand.addCard(card);
         }
         assertEquals(Combination.STRAIGHT, hand.getCombination());
+        assertEquals(5, hand.getFinalFiveCombinationCards().size());
+    }
+
+    @Test
+    public void testOfNotStraight2(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.SPADES, Rank.FIVE));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.SEVEN));
+        communityCards.add(new Card(Suit.SPADES, Rank.NINE));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.TEN));
+        communityCards.add(new Card(Suit.CLUBS, Rank.ACE));
+        final Hand hand = new Hand();
+        hand.addCard(new Card(Suit.DIAMONDS, Rank.KING));
+        hand.addCard(new Card(Suit.DIAMONDS, Rank.THREE));
+        for(final Card card: communityCards){
+            hand.addCard(card);
+        }
+        assertNotEquals(Combination.STRAIGHT, hand.getCombination());
+        assertEquals(Combination.HIGH_CARD, hand.getCombination());
+        assertEquals(5, hand.getFinalFiveCombinationCards().size());
+    }
+
+    @Test
+    public void testOfNotStraight3(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.SPADES, Rank.FIVE));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.SEVEN));
+        communityCards.add(new Card(Suit.SPADES, Rank.NINE));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.TEN));
+        communityCards.add(new Card(Suit.CLUBS, Rank.ACE));
+        final Hand hand = new Hand();
+        hand.addCard(new Card(Suit.SPADES, Rank.EIGHT));
+        hand.addCard(new Card(Suit.CLUBS, Rank.QUEEN));
+        for(final Card card: communityCards){
+            hand.addCard(card);
+        }
+        assertNotEquals(Combination.STRAIGHT, hand.getCombination());
+        assertEquals(Combination.HIGH_CARD, hand.getCombination());
+        assertEquals(5, hand.getFinalFiveCombinationCards().size());
+    }
+
+    @Test
+    public void testOfNotStraight4(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.SPADES, Rank.FIVE));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.SEVEN));
+        communityCards.add(new Card(Suit.SPADES, Rank.NINE));
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.TEN));
+        communityCards.add(new Card(Suit.CLUBS, Rank.ACE));
+        final Hand hand = new Hand();
+        hand.addCard(new Card(Suit.SPADES, Rank.JACK));
+        hand.addCard(new Card(Suit.CLUBS, Rank.KING));
+        for(final Card card: communityCards){
+            hand.addCard(card);
+        }
+        assertNotEquals(Combination.STRAIGHT, hand.getCombination());
+        assertEquals(Combination.HIGH_CARD, hand.getCombination());
+        assertEquals(5, hand.getFinalFiveCombinationCards().size());
+    }
+
+    @Test
+    public void testOfNoStraight(){
+        List<Card> communityCards = new ArrayList<>();
+        communityCards.add(new Card(Suit.DIAMONDS, Rank.SIX));
+        communityCards.add(new Card(Suit.SPADES, Rank.EIGHT));
+        communityCards.add(new Card(Suit.HEARTS, Rank.JACK));
+        communityCards.add(new Card(Suit.CLUBS, Rank.QUEEN));
+        communityCards.add(new Card(Suit.CLUBS, Rank.KING));
+        final Hand hand = new Hand();
+        hand.addCard(new Card(Suit.HEARTS, Rank.ACE));
+        hand.addCard(new Card(Suit.DIAMONDS, Rank.TWO));
+        for(final Card card: communityCards){
+            hand.addCard(card);
+        }
+        assertNotEquals(Combination.STRAIGHT, hand.getCombination());
+        assertEquals(Combination.HIGH_CARD, hand.getCombination());
         assertEquals(5, hand.getFinalFiveCombinationCards().size());
     }
 

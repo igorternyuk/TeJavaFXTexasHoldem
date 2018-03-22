@@ -126,7 +126,7 @@ public class Hand implements Comparable<Hand> {
 
                 int numberOfPairs = 0, numberOfTriples = 0, numberOfQuads = 0, numberInARow = 0, maxNumberInARow = 0,
                         maxValueInARow = 0;
-                final List<Card> longestCardSequence = new ArrayList<>(MAX_NUMBER_OF_CARDS);
+                List<Card> longestCardSequence = new ArrayList<>(MAX_NUMBER_OF_CARDS);
                 final List<Card> currentCardSquence = new ArrayList<>(MAX_NUMBER_OF_CARDS);
                 final Map<Integer, List<Card>> pairs = new HashMap<>();
                 final Map<Integer, List<Card>> triples = new HashMap<>();
@@ -135,14 +135,14 @@ public class Hand implements Comparable<Hand> {
                     final List<Card> currCardList = entry.getValue();
                     switch (currCardList.size()) {
                         case 0:
-                            if (numberInARow <= MIN_NUMBER_OF_CARDS && numberInARow > longestCardSequence.size()) {
+                            if (numberInARow > longestCardSequence.size()) {
                                 maxValueInARow = currentCardSquence.get(currentCardSquence.size() - 1).getValue();
                                 longestCardSequence.clear();
                                 longestCardSequence.addAll(currentCardSquence);
                                 maxNumberInARow = longestCardSequence.size();
-                                currentCardSquence.clear();
-                                numberInARow = 0;
                             }
+                            numberInARow = 0;
+                            currentCardSquence.clear();
                             break;
                         case 1:
                             ++numberInARow;
@@ -166,14 +166,17 @@ public class Hand implements Comparable<Hand> {
                     }
                 }
 
-                if(numberInARow >= maxNumberInARow && numberInARow >= MIN_NUMBER_OF_CARDS){
+                if(numberInARow >= MIN_NUMBER_OF_CARDS || maxNumberInARow >= MIN_NUMBER_OF_CARDS){
                     if(numberInARow > MAX_NUMBER_OF_CARDS) {
                         numberInARow = MAX_NUMBER_OF_CARDS;
                     }
-                    longestCardSequence.clear();
-                    for(int i = numberInARow - MIN_NUMBER_OF_CARDS; i < numberInARow; ++i){
-                        longestCardSequence.add(currentCardSquence.get(i));
+                    if(numberInARow > maxNumberInARow){
+                        longestCardSequence.clear();
+                        longestCardSequence.addAll(currentCardSquence);
+                        maxNumberInARow = numberInARow;
                     }
+                    longestCardSequence = longestCardSequence.subList(maxNumberInARow - MIN_NUMBER_OF_CARDS,
+                            longestCardSequence.size());
                     maxValueInARow = longestCardSequence.get(longestCardSequence.size() - 1).getValue();
                     maxNumberInARow = MIN_NUMBER_OF_CARDS;
                     currentCardSquence.clear();
@@ -206,32 +209,23 @@ public class Hand implements Comparable<Hand> {
                     finalFiveCardCombination.add(otherCards.get(0));
                 } else if (numberOfTriples == 2) {
                     this.combination = Combination.FULL_HOUSE;
-                    final List<Card> firstTriple = triples.get(1);
-                    final List<Card> secondTriple = triples.get(2);
-                    final int firstTripleValue = firstTriple.get(0).getValue();
-                    final int secondTripleValue = secondTriple.get(0).getValue();
-                    final List<Card> highRankedTriple = firstTripleValue > secondTripleValue ? firstTriple : secondTriple;
-                    final List<Card> lowRankedTriple = firstTripleValue > secondTripleValue ? secondTriple : firstTriple;
-                    this.finalFiveCardCombination.addAll(highRankedTriple);
-                    this.finalFiveCardCombination.add(lowRankedTriple.get(0));
-                    this.finalFiveCardCombination.add(lowRankedTriple.get(1));
+                    this.finalFiveCardCombination.addAll(triples.get(2));
+                    this.finalFiveCardCombination.add(triples.get(1).get(0));
+                    this.finalFiveCardCombination.add(triples.get(1).get(1));
                 } else if (numberOfTriples == 1) {
                     List<Card> triple = triples.get(1);
                     if (numberOfPairs == 2) {
                         this.combination = Combination.FULL_HOUSE;
                         this.finalFiveCardCombination.addAll(triples.get(1));
-                        final List<Card> firstPair = pairs.get(1);
-                        final List<Card> secondPair = pairs.get(2);
-                        if(firstPair.get(0).getValue() > secondPair.get(0).getValue()){
-                            this.finalFiveCardCombination.addAll(firstPair);
-                        } else {
-                            this.finalFiveCardCombination.addAll(secondPair);
-                        }
+                        this.finalFiveCardCombination.addAll(pairs.get(2));
                     } else if (numberOfPairs == 1) {
                         this.combination = Combination.FULL_HOUSE;
-                        final List<Card> pair = pairs.get(1);
                         this.finalFiveCardCombination.addAll(triple);
-                        this.finalFiveCardCombination.addAll(pair);
+                        this.finalFiveCardCombination.addAll(pairs.get(1));
+                    } else if(isFlush) {
+                        this.combination = Combination.FLUSH;
+                        this.finalFiveCardCombination.addAll(cardsOfTheSameFlush);
+                        this.finalFiveCardCombination.sort(Comparator.comparing(Card::getValue).reversed());
                     } else {
                         this.combination = Combination.THREE_OF_A_KIND;
                         this.finalFiveCardCombination.addAll(triple);
@@ -241,16 +235,21 @@ public class Hand implements Comparable<Hand> {
                         otherCards.sort(Comparator.comparing(Card::getValue).reversed());
                         this.finalFiveCardCombination.addAll(otherCards.subList(0,2));
                     }
-                } else if(numberOfPairs == 2){
-                    final List<Card> firstPair = pairs.get(1);
-                    final int firstPairRank = firstPair.get(0).getValue();
-                    final List<Card> secondPair = pairs.get(2);
-                    final int secondPairRank = secondPair.get(0).getValue();
+                } else if(isFlush) {
+                    this.combination = Combination.FLUSH;
+                    this.finalFiveCardCombination.addAll(cardsOfTheSameFlush);
+                    this.finalFiveCardCombination.sort(Comparator.comparing(Card::getValue).reversed());
+                }  else if(numberOfPairs == 3){
                     this.combination = Combination.TWO_PAIRS;
-                    final List<Card> highRankedPair = firstPairRank > secondPairRank ? firstPair : secondPair;
-                    final List<Card> lowRankedPair = firstPairRank > secondPairRank ? secondPair : firstPair;
-                    this.finalFiveCardCombination.addAll(highRankedPair);
-                    this.finalFiveCardCombination.addAll(lowRankedPair);
+                    this.finalFiveCardCombination.addAll(pairs.get(3));
+                    this.finalFiveCardCombination.addAll(pairs.get(2));
+                    this.finalFiveCardCombination.add(pairs.get(1).get(0));
+                }  else if(numberOfPairs == 2){
+                    final int firstPairRank = pairs.get(1).get(0).getValue();
+                    final int secondPairRank = pairs.get(2).get(0).getValue();
+                    this.combination = Combination.TWO_PAIRS;
+                    this.finalFiveCardCombination.addAll(pairs.get(2));
+                    this.finalFiveCardCombination.addAll(pairs.get(1));
                     final List<Card> otherCards = this.cards.stream()
                             .filter(card -> card.getValue() != firstPairRank
                                     && card.getValue() != secondPairRank).collect(Collectors.toList());
@@ -265,11 +264,6 @@ public class Hand implements Comparable<Hand> {
                             .collect(Collectors.toList());
                     otherCards.sort(Comparator.comparing(Card::getValue).reversed());
                     this.finalFiveCardCombination.addAll(otherCards.subList(0,3));
-                } else if (isFlush) {
-                    this.combination = Combination.FLUSH;
-                    this.finalFiveCardCombination.addAll(cardsOfTheSameFlush);
-                    this.finalFiveCardCombination.sort(Comparator.comparing(Card::getValue).reversed());
-
                 } else {
                     this.combination = Combination.HIGH_CARD;
                     this.cards.sort(Comparator.comparing(Card::getValue).reversed());
@@ -305,17 +299,13 @@ public class Hand implements Comparable<Hand> {
     public String toString(){
         final StringBuilder stringBuilder = new StringBuilder();
         if(!this.finalFiveCardCombination.isEmpty()){
-            this.finalFiveCardCombination.forEach(card -> {
-                stringBuilder.append(card).append("-");
-            });
+            this.finalFiveCardCombination.forEach(card -> stringBuilder.append(card).append("-"));
             final String result = stringBuilder.toString();
-            return String.format("%s %s", result.substring(0, result.length() - 1), this.combination);
+            return String.format("%s\n%s", result.substring(0, result.length() - 1), this.combination);
         } else {
-            this.cards.forEach(card -> {
-                stringBuilder.append(card).append("-");
-            });
+            this.cards.forEach(card -> stringBuilder.append(card).append("-"));
             final String result = stringBuilder.toString();
-            return String.format("%s %s", result.substring(0, result.length() - 1), this.combination);
+            return String.format("%s\n%s", result.substring(0, result.length() - 1), this.combination);
         }
     }
 }
