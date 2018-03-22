@@ -7,7 +7,7 @@
 <?import javafx.scene.control.MenuItem?>
 
 <BorderPane fx:controller="com.igorternyuk.texasholdem.Controller"
-            xmlns:fx="http://javafx.com/fxml" prefWidth="1200" prefHeight="700">
+            xmlns:fx="http://javafx.com/fxml" prefWidth="1220" prefHeight="700">
     <top>
         <MenuBar>
             <Menu text="Game">
@@ -22,7 +22,7 @@
         </MenuBar>
     </top>
     <center>
-        <Canvas fx:id="canvas" width="1200" height="640" />
+        <Canvas fx:id="canvas" width="1220" height="640" />
     </center>
     <bottom>
         <HBox spacing="5" alignment="CENTER">

@@ -8,7 +8,7 @@ import javafx.stage.Stage;
 
 public class TexasHoldemApp extends Application {
     private static final String TITLE_OF_PROGRAM = "JTexasHoldem";
-    private static final int WINDOW_WIDTH = 1200;
+    private static final int WINDOW_WIDTH = 1220;
     private static final int WINDOW_HEIGTH = 700;
     @Override
     public void start(Stage primaryStage) throws Exception{

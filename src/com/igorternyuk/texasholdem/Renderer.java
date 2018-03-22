@@ -20,9 +20,9 @@ public class Renderer {
     private static final Color TABLE_COLOR = Color.rgb(29, 150, 80);
     private static final double TABLE_RECT_ARC_SIZE = 80;
     private static final double GAME_INFO_X = 275;
-    private static final double GAME_INFO_Y = 245;
+    private static final double GAME_INFO_Y = 250;
     private static ResourceManager rm = ResourceManager.getInstance();
-    private static final int[] COMMUNITY_CARDS_X = {425, 500, 575, 650, 725};
+    private static final int[] COMMUNITY_CARDS_X = {405, 480, 555, 630, 705};
     private static final int COMMUNITY_CARDS_Y = 335;
     private static final int[] PLAYER_CARDS_X = {750, 290, 20, 290, 750, 1000};
     private static final int[] PLAYER_CARDS_Y = {445, 445, 200, 20, 20, 200};
@@ -54,7 +54,7 @@ public class Renderer {
                             PLAYER_CARDS_X[i] + j * (ResourceManager.CARD_WIDTH + 2), PLAYER_CARDS_Y[i]);
                 } else {
                     if(player.getPlayerType().isHuman()){
-                        gc.drawImage(rm.getCardImage(holeCards.get(i)),
+                        gc.drawImage(rm.getCardImage(holeCards.get(j)),
                                 PLAYER_CARDS_X[i] + j * (ResourceManager.CARD_WIDTH + 2), PLAYER_CARDS_Y[i]);
                     } else {
                         gc.drawImage(rm.getCardBack(), PLAYER_CARDS_X[i] + j * (ResourceManager.CARD_WIDTH + 2),
@@ -74,10 +74,10 @@ public class Renderer {
             switch (players.get(i).getPlayerRole()){
                 case DEALER:
                     gc.setFill(Color.GREEN);
-                    gc.fillOval(PLAYER_INFO_X[i] + 170, PLAYER_INFO_Y[i] - 90, 60, 60);
+                    gc.fillOval(PLAYER_INFO_X[i] + 155, PLAYER_INFO_Y[i] - 90, 60, 60);
                     gc.setFill(Color.RED);
                     gc.setFont(LARGE_FONT);
-                    gc.fillText("D", PLAYER_INFO_X[i] + 186, PLAYER_INFO_Y[i] - 44);
+                    gc.fillText("D", PLAYER_INFO_X[i] + 170, PLAYER_INFO_Y[i] - 44);
                     break;
                 case SMALL_BLIND:
                 case BIG_BLIND:
@@ -98,7 +98,7 @@ public class Renderer {
         if(game.isWaitingForHumanBet()) {
             gc.setFill(Color.RED);
             gc.setFont(SMALL_FONT);
-            gc.fillText("It is your turn to bet", GAME_INFO_X, 320);
+            gc.fillText("It is your turn to bet", GAME_INFO_X, GAME_INFO_Y + 75);
         }
     }
 
