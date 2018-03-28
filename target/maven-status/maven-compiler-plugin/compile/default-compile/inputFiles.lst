@@ -1,0 +1,15 @@
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/Game.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/ResourceManager.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/Card.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/Deck.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/Renderer.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/GameStatus.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/Controller.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/TexasHoldemApp.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/player/HumanPlayer.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/Hand.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/player/PlayerType.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/player/AbstractPlayer.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/player/PlayerStatus.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/player/PlayerRole.java
+/home/igor/Рабочий стол/TeJavaFXTexasHoldem/src/main/java/com/igorternyuk/texasholdem/model/player/ComputerPlayer.java

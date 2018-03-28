@@ -1,0 +1,4 @@
+tests/DeckTest.class
+tests/CardTest.class
+tests/HandsComparisonTest.class
+tests/HandTest.class
